@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#ffffff"/>
+  <title>GSS Connect</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- Onboarding Overlay -->
+  <div id="onboarding" class="onb-overlay hidden">
+    <div class="onb-sheet glass">
+      <div class="onb-page onb-active" data-step="1">
+        <div class="torch-wrap">
+          <!-- Simple animated torch -->
+          <svg class="torch" width="120" height="160" viewBox="0 0 120 160" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <defs>
+              <radialGradient id="flameGrad">
+                <stop offset="0%" stop-color="#fff6a9"/>
+                <stop offset="60%" stop-color="#ffb347"/>
+                <stop offset="100%" stop-color="#ff5e62"/>
+              </radialGradient>
+            </defs>
+            <g>
+              <ellipse cx="60" cy="60" rx="26" ry="36" fill="url(#flameGrad)" class="flame flame-1"/>
+              <ellipse cx="60" cy="70" rx="18" ry="26" fill="url(#flameGrad)" class="flame flame-2"/>
+              <ellipse cx="60" cy="80" rx="10" ry="16" fill="#fff3c4" class="flame flame-3"/>
+              <rect x="50" y="100" width="20" height="40" rx="10" fill="#7a5c3a"/>
+            </g>
+          </svg>
+          <div class="badge glass">📈 Bis zu <b>2× schneller</b> lernen*</div>
+        </div>
+        <h2>Willkommen in <span class="brand">GSS Connect</span></h2>
+        <p class="muted">Dein iPhone‑Style Schul‑Assistent: Chat‑KI, Hausaufgaben, Stundenplan & Lern‑Tools – alles an einem Ort.</p>
+      </div>
+
+      <div class="onb-page" data-step="2">
+        <h3>So funktioniert’s</h3>
+        <ul class="list">
+          <li>💬 <b>Chat</b> – frage nach Rechenwegen, Zusammenfassungen & Erklärungen.</li>
+          <li>📚 <b>Hausaufgaben</b> – Aufgaben anlegen, abhaken, immer im Blick.</li>
+          <li>🏫 <b>Stundenplan</b> – Fächer pro Stunde eintragen, lokal gespeichert.</li>
+          <li>🧠 <b>Lern‑Tools</b> – Texte zusammenfassen & Quizfragen erzeugen.</li>
+          <li>👤 <b>Profil</b> – Name/Klasse, Dark‑Mode & KI‑Schlüssel verwalten.</li>
+        </ul>
+      </div>
+
+      <div class="onb-page" data-step="3">
+        <h3>Verbinde die KI</h3>
+        <p>Trage deinen <b>OpenAI API‑Key</b> ein (Format: <code>sk‑...</code>). Er wird <b>nur lokal</b> gespeichert.</p>
+        <div class="row">
+          <input id="onb-api-key" type="password" placeholder="sk-..." />
+          <button id="onb-toggle" class="ghost small" type="button">Anzeigen</button>
+        </div>
+        <div class="row">
+          <button id="onb-save" class="primary" type="button">Key speichern</button>
+          <button id="onb-test" class="ghost" type="button">Verbindung testen</button>
+        </div>
+        <p id="onb-status" class="tiny muted"></p>
+      </div>
+
+      <div class="onb-footer row">
+        <button id="onb-skip" class="ghost">Überspringen</button>
+        <div class="spacer"></div>
+        <button id="onb-prev" class="ghost" disabled>Zurück</button>
+        <button id="onb-next" class="primary">Weiter</button>
+        <button id="onb-start" class="primary hidden">Los geht’s</button>
+      </div>
+      <p class="tiny footnote">* Interne App‑Statistiken: Nutzer berichten über kürzere Lernwege & bessere Struktur.</p>
+    </div>
+  </div>
+
+  <div id="app">
+    <header class="app-header glass">
+      <h1>GSS Connect</h1>
+      <button id="installBtn" class="ghost small" hidden>Installieren</button>
+    </header>
+
+    <main id="page-content">
+      <!-- Chat -->
+      <section id="chat" class="page active">
+        <div id="chat-window" class="card glass"></div>
+        <div class="chat-input">
+          <input id="userInput" type="text" inputmode="text" placeholder="Frag die Schul‑KI … (z. B. Potenzgesetze erklären)" />
+          <button id="sendBtn" class="primary">Senden</button>
+        </div>
+        <div class="suggestions">
+          <button class="chip" data-suggest="Erkläre die Mitternachtsformel mit Beispiel.">Mitternachtsformel</button>
+          <button class="chip" data-suggest="Fasse diesen Text in 5 Punkten zusammen: ...">Text zusammenfassen</button>
+          <button class="chip" data-suggest="Erstelle 5 Quizfragen zu Photosynthese mit Lösungen.">Bio‑Quiz</button>
+        </div>
+      </section>
+
+      <!-- Hausaufgaben -->
+      <section id="homework" class="page">
+        <h2>Hausaufgaben</h2>
+        <ul id="todo-list" class="todo-list"></ul>
+        <div class="input-row">
+          <input id="todo-input" placeholder="Neue Aufgabe …" />
+          <button id="add-todo" class="primary">+</button>
+        </div>
+      </section>
+
+      <!-- Stundenplan -->
+      <section id="schedule" class="page">
+        <h2>Stundenplan</h2>
+        <div class="grid card glass">
+          <div class="grid-row grid-head">
+            <div></div><div>Mo</div><div>Di</div><div>Mi</div><div>Do</div><div>Fr</div>
+          </div>
+          <div id="schedule-grid"></div>
+        </div>
+        <div class="hint">Tipp: Tippe in ein Feld, um Fach/Ort einzutragen. Alles wird lokal gespeichert.</div>
+      </section>
+
+      <!-- Lern-Tools -->
+      <section id="learn" class="page">
+        <h2>Lern‑Tools</h2>
+        <textarea id="learn-input" class="card" placeholder="Füge Text ein … (z. B. Geschichtsabschnitt)"></textarea>
+        <div class="learn-actions">
+          <button id="summarize-btn" class="secondary">Zusammenfassen</button>
+          <button id="quiz-btn" class="secondary">Quiz erstellen</button>
+        </div>
+        <div id="learn-output" class="card glass"></div>
+      </section>
+
+      <!-- Profil -->
+      <section id="profile" class="page">
+        <h2>Profil & Einstellungen</h2>
+        <div class="card glass form">
+          <label>Dein Name
+            <input id="profile-name" placeholder="z. B. Giuliano" />
+          </label>
+          <label>Klasse
+            <input id="profile-class" placeholder="z. B. 10a" />
+          </label>
+          <label>Dark‑Mode
+            <input id="theme-toggle" type="checkbox" />
+          </label>
+        </div>
+
+        <h3>OpenAI‑Schlüssel (für echte KI)</h3>
+        <div class="card glass form">
+          <label>API‑Key
+            <input id="api-key" type="password" placeholder="sk-..." />
+          </label>
+          <div class="row">
+            <button id="save-key" class="primary">Key speichern</button>
+            <button id="check-key" class="ghost">Verbindung testen</button>
+            <button id="toggle-key" class="ghost">Anzeigen</button>
+          </div>
+          <p class="tiny">Dein Key wird nur lokal (LocalStorage) gespeichert. Für Sicherheit verwende einen separaten, eingeschränkten Schlüssel.</p>
+          <details class="tiny">
+            <summary>Probleme? (Tipps ausklappen)</summary>
+            <ul class="tiny">
+              <li>401: Key falsch / kein Guthaben im OpenAI‑Account.</li>
+              <li>429: Limit erreicht → später erneut, oder Guthaben erhöhen.</li>
+              <li>404/‘model not found’: Anderes Modell wählen (z. B. gpt‑4o‑mini).</li>
+              <li>Netzwerk/CORS: Werbeblocker/Firewall prüfen, Seite über HTTPS laden.</li>
+            </ul>
+          </details>
+        </div>
+
+        <p class="footer">developed by Giuliano</p>
+      </section>
+    </main>
+
+    <nav class="tabbar glass">
+      <button class="tab active" data-page="chat" aria-label="Chat">💬<span>Chat</span></button>
+      <button class="tab" data-page="homework" aria-label="Hausaufgaben">📚<span>Aufgaben</span></button>
+      <button class="tab" data-page="schedule" aria-label="Stundenplan">🏫<span>Plan</span></button>
+      <button class="tab" data-page="learn" aria-label="Lernen">🧠<span>Lernen</span></button>
+      <button class="tab" data-page="profile" aria-label="Profil">👤<span>Profil</span></button>
+    </nav>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
